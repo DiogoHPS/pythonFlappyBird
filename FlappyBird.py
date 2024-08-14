@@ -85,12 +85,12 @@ class Passaro:
 
         # desenhar a imagem
         imagem_rotacionada = pygame.transform.rotate(self.imagem, self.angulo)
-        pos_centro_imagem = self.imagem.get.rect(topleft=(self.x, self.y)). center
+        pos_centro_imagem = self.imagem.get_rect(topleft=(self.x, self.y)).center
         retangulo = imagem_rotacionada.get.rect(center=pos_centro_imagem)
         tela.blit(imagem_rotacionada, retangulo.topleft)
         
-    def get_maks(self):
-        pygame.mask.from_surface(self.imagem)
+    def get_mask(self):
+        return pygame.mask.from_surface(self.imagem)
         
 class Cano:
     DISTANCIA =  200
@@ -108,7 +108,7 @@ class Cano:
         
     def definir_altura(self):
         self.altura = random.randrange(50, 450)
-        self.pos_base = self.altura - self.CANO_TOPO.get_height()
+        self.pos_topo = self.altura - self.CANO_TOPO.get_height()
         self.pos_base = self.altura + self.DISTANCIA
         
     def mover(self):
@@ -119,7 +119,7 @@ class Cano:
         tela.blit(self.CANO_BASE, (self.x, self.pos_base))
         
     def colidir(self, passaro):
-        passaro_mask = passaro.getmask()
+        passaro_mask = passaro.get_mask()
         topo_mask = pygame.mask.from_surface(self.CANO_TOPO)
         base_mask = pygame.mask.from_surface(self.CANO_BASE)
         
@@ -137,4 +137,92 @@ class Cano:
 
 class Chao:
     VELOCIDADE = 5
-    ALTURA = 50
+    LARGURA = IMAGEM_CHAO.get_width()
+    IMAGEM = IMAGEM_CHAO
+    
+    def __init__(self, y):
+        self.y = y
+        self.x0 = 0
+        self.x1 = self.LARGURA
+        
+    def mover(self):
+        self.x0 -= self.VELOCIDADE
+        self.x1 -= self.VELOCIDADE 
+        
+        if self.x0 + self.LARGURA < 0:
+            self.x0 = self.x0 + self.LARGURA
+        if self.x1 + self.LARGURA < 0:
+            self.x1 = self.x1 + self.LARGURA
+    
+    
+    def desenhar(self, tela):
+        tela.blit(self.IMAGEM, (self.x0, self.y))
+        tela.blit(self.IMAGEM, (self.x1, self.y))
+        
+
+def desenhar_tela(tela, passaros, canos, chao, pontos):
+    tela.blit(IMAGEM_BACKGROUND, (0, 0))
+    for passaro in passaros:
+        passaro.desenhar(tela)
+    for cano in canos:
+        cano.desenhar(tela)
+    
+    texto = FONTE_PONTOS.render("bolsonaro: {pontos}", 1, (255, 255, 255))    
+    tela.blit(texto, (TELA_LARGURA - 10 - texto.get_width(), 10))
+    chao.desenhar(tela)
+    pygame.display.update()
+
+
+def main():
+    passaros = [Passaro(230, 350)]
+    chao = Chao(730)
+    canos = [Cano(700)]
+    tela = pygame.display.set_mode((TELA_LARGURA, TELA_ALTURA))
+    pontos = 0
+    relogio = pygame.time.clock()
+    
+    rodanndo = True
+    while rodanndo:
+        relogio.tick(30)
+        
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                rodanndo = False
+                pygame.quit()
+                quit()
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_SPACE:
+                    for passaro in passaros:
+                        passaro.pular()
+        
+        for passaro in passaros:
+            passaro.mover()     
+        chao.mover()
+        
+        adicionar_cano = False
+        remover_canos = []
+        for cano in canos:
+            for i, passaro in enumerate(passaros):
+                if cano.colidir(passaro):
+                    passaros.pop(i)
+                if not cano.passou and  passaro.x > cano.x:
+                    cano.passou = True
+                    adicionar_cano = True
+            cano.mover()
+            if  cano.x + cano.CANO_TOPO.get_width() < 0:
+                remover_canos.append(cano)  
+                
+        if adicionar_cano:
+            pontos += 1
+            canos.append(Cano(600))
+        for cano in remover_canos:
+            canos.remove(cano)
+            
+        for i, passaros in enumerate(passaros):
+            if (passaro.y + passaro.imagem.get_height()) > chao.y or passaro.y < 0:
+                passaros.pop(i)
+                                     
+        desenhar_tela(tela, passaros, canos, chao, pontos)
+        
+if __name__ == '__main__':
+    main()
