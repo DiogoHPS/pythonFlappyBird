@@ -86,7 +86,7 @@ class Passaro:
         # desenhar a imagem
         imagem_rotacionada = pygame.transform.rotate(self.imagem, self.angulo)
         pos_centro_imagem = self.imagem.get_rect(topleft=(self.x, self.y)).center
-        retangulo = imagem_rotacionada.get.rect(center=pos_centro_imagem)
+        retangulo = imagem_rotacionada.get_rect(center=pos_centro_imagem)
         tela.blit(imagem_rotacionada, retangulo.topleft)
         
     def get_mask(self):
@@ -167,7 +167,7 @@ def desenhar_tela(tela, passaros, canos, chao, pontos):
     for cano in canos:
         cano.desenhar(tela)
     
-    texto = FONTE_PONTOS.render("bolsonaro: {pontos}", 1, (255, 255, 255))    
+    texto = FONTE_PONTOS.render(f"Pontuação: {pontos}", 1, (255, 255, 255))
     tela.blit(texto, (TELA_LARGURA - 10 - texto.get_width(), 10))
     chao.desenhar(tela)
     pygame.display.update()
@@ -179,15 +179,15 @@ def main():
     canos = [Cano(700)]
     tela = pygame.display.set_mode((TELA_LARGURA, TELA_ALTURA))
     pontos = 0
-    relogio = pygame.time.clock()
+    relogio = pygame.time.Clock()
     
-    rodanndo = True
-    while rodanndo:
+    rodando = True
+    while rodando:
         relogio.tick(30)
         
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
-                rodanndo = False
+                rodando = False
                 pygame.quit()
                 quit()
             if evento.type == pygame.KEYDOWN:
@@ -205,12 +205,12 @@ def main():
             for i, passaro in enumerate(passaros):
                 if cano.colidir(passaro):
                     passaros.pop(i)
-                if not cano.passou and  passaro.x > cano.x:
+                if not cano.passou and passaro.x > cano.x:
                     cano.passou = True
                     adicionar_cano = True
             cano.mover()
-            if  cano.x + cano.CANO_TOPO.get_width() < 0:
-                remover_canos.append(cano)  
+            if cano.x + cano.CANO_TOPO.get_width() < 0:
+                remover_canos.append(cano)
                 
         if adicionar_cano:
             pontos += 1
@@ -218,7 +218,7 @@ def main():
         for cano in remover_canos:
             canos.remove(cano)
             
-        for i, passaros in enumerate(passaros):
+        for i, passaro in enumerate(passaros):
             if (passaro.y + passaro.imagem.get_height()) > chao.y or passaro.y < 0:
                 passaros.pop(i)
                                      
